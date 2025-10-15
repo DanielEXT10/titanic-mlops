@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: titanic-mlops
+Version: 0.1
+Author: DanielGP
+Requires-Dist: pandas
+Requires-Dist: numpy
+Dynamic: author
+Dynamic: requires-dist
