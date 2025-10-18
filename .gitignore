@@ -10,3 +10,9 @@ webserver_config.py
 airflow.cfg
 airflow.db
 venv/
+logs/
+tests/
+plugins/
+include/
+.astro/
+titanic_mlops.egg-info/

@@ -4,5 +4,10 @@ Version: 0.1
 Author: DanielGP
 Requires-Dist: pandas
 Requires-Dist: numpy
+Requires-Dist: setuptools
+Requires-Dist: psycopg2
+Requires-Dist: scikit-learn
+Requires-Dist: imbalanced-learn
+Requires-Dist: redis
 Dynamic: author
 Dynamic: requires-dist
