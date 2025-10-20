@@ -9,5 +9,8 @@ Requires-Dist: psycopg2
 Requires-Dist: scikit-learn
 Requires-Dist: imbalanced-learn
 Requires-Dist: redis
+Requires-Dist: flask
+Requires-Dist: alibi-detect
+Requires-Dist: prometheus_client
 Dynamic: author
 Dynamic: requires-dist

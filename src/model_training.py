@@ -50,7 +50,10 @@ class ModelTrainer:
             y_train = train_df["Survived"]
             X_test = test_df.drop("Survived", axis=1)
             y_test = test_df["Survived"]
-
+            
+            features_used = X_train.columns.tolist()
+            logger.info(f"Features used for training ({len(features_used)}): {features_used}")
+            
             logger.info("Data preparation completed.")
 
             return X_train, X_test, y_train, y_test

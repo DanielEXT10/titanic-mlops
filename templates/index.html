@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Titanic Classifier</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <style>
+    @keyframes swell { from { transform: translateX(0); } to { transform: translateX(-50%);} }
+    @keyframes bob { 0%,100% { transform: translateY(0) rotate(0.4deg);} 50% { transform: translateY(-6px) rotate(-0.4deg);} }
+    .animate-swell { animation: swell 10s linear infinite; will-change: transform; }
+    .animate-swell-rev { animation: swell 14s linear infinite reverse; will-change: transform; }
+    .animate-bob { animation: bob 4s ease-in-out infinite; will-change: transform; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-sky-100 via-sky-50 to-white text-slate-800 selection:bg-sky-200 selection:text-slate-900">
+  <header class="relative z-10 border-b border-white/60 backdrop-blur bg-white/40">
+    <div class="mx-auto max-w-6xl px-4 md:px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="..\static\img\ship.png" alt="Titanic icon" class="h-10 w-10 rounded-2xl shadow bg-sky-100 p-1" />
+        <div>
+          <h1 class="text-xl font-semibold">Titanic Classifier</h1>
+          <p class="text-xs text-slate-600 -mt-0.5">Ocean-themed interactive form (HTML + Tailwind)</p>
+        </div>
+      </div>
+      <nav class="text-sm text-slate-600 hidden sm:block">
+        <a href="#form" class="hover:text-slate-900">Form</a>
+        <span class="mx-3">•</span>
+        <a href="#about" class="hover:text-slate-900">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="form" class="relative z-10 mx-auto max-w-6xl px-4 md:px-6 py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <section class="lg:col-span-2">
+        <form method="post" action="/predict" class="rounded-3xl bg-white/80 shadow-2xl ring-1 ring-slate-200/80 backdrop-blur p-6 md:p-8">
+          <div class="flex items-start justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-xl font-semibold">Model features</h2>
+              <p class="text-sm text-slate-600">Derived fields (FamilySize, HasCabin, Isalone, Title, Pclass_Fare, Age_Fare) are computed on the server.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- Raw inputs used directly or for derivations -->
+            <label class="block" for="name">
+              <span class="block text-sm font-medium mb-1">Name</span>
+              <input id="name" name="Name" type="text" placeholder="e.g., Mr. John Smith" value="{{ request.form.get('Name','') }}"
+                     class="w-full h-11 rounded-xl px-3 ring-1 ring-slate-300 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+              <span class="mt-1 block text-xs text-slate-500">Server extracts Title (Mr/Miss/Mrs/Master/Rare → 0..4).</span>
+            </label>
+
+            <label class="block" for="age">
+              <span class="block text-sm font-medium mb-1">Age *</span>
+              <input id="age" name="Age" type="number" min="0" max="90" step="1" value="{{ request.form.get('Age', 28) }}"
+                     class="w-full h-11 rounded-xl px-3 ring-1 ring-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-400" />
+            </label>
+
+            <fieldset>
+              <legend class="block text-sm font-medium mb-1">Pclass *</legend>
+              <div class="inline-flex rounded-2xl shadow-sm ring-1 ring-slate-300 overflow-hidden">
+                <input class="sr-only" type="radio" id="p1" name="Pclass" value="1" {% if (request.form.get('Pclass','3')|int) == 1 %}checked{% endif %}>
+                <label for="p1" class="px-4 py-2 text-sm cursor-pointer {{ 'bg-sky-600 text-white' if (request.form.get('Pclass','3')|int)==1 else 'bg-white hover:bg-slate-50' }} border-r border-slate-300">1st</label>
+                <input class="sr-only" type="radio" id="p2" name="Pclass" value="2" {% if (request.form.get('Pclass','3')|int) == 2 %}checked{% endif %}>
+                <label for="p2" class="px-4 py-2 text-sm cursor-pointer {{ 'bg-sky-600 text-white' if (request.form.get('Pclass','3')|int)==2 else 'bg-white hover:bg-slate-50' }} border-r border-slate-300">2nd</label>
+                <input class="sr-only" type="radio" id="p3" name="Pclass" value="3" {% if (request.form.get('Pclass','3')|int) == 3 %}checked{% endif %}>
+                <label for="p3" class="px-4 py-2 text-sm cursor-pointer {{ 'bg-sky-600 text-white' if (request.form.get('Pclass','3')|int)==3 else 'bg-white hover:bg-slate-50' }}">3rd</label>
+              </div>
+            </fieldset>
+
+            <label class="block" for="fare">
+              <span class="block text-sm font-medium mb-1">Fare *</span>
+              <input id="fare" name="Fare" type="number" min="0" step="0.01" value="{{ request.form.get('Fare', 7.25) }}"
+                     class="w-full h-11 rounded-xl px-3 ring-1 ring-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-400" />
+            </label>
+
+            <!-- Encoded select values to match your mapping -->
+            <label class="block" for="sex">
+              <span class="block text-sm font-medium mb-1">Sex *</span>
+              <select id="sex" name="Sex" class="w-full h-11 rounded-xl px-3 ring-1 ring-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-400">
+                <option value="0" {% if request.form.get('Sex','0')=='0' %}selected{% endif %}>Male (0)</option>
+                <option value="1" {% if request.form.get('Sex')=='1' %}selected{% endif %}>Female (1)</option>
+              </select>
+              <span class="mt-1 block text-xs text-slate-500">Mapped as {'male':0,'female':1}.</span>
+            </label>
+
+            <label class="block" for="embarked">
+              <span class="block text-sm font-medium mb-1">Embarked *</span>
+              <select id="embarked" name="Embarked" class="w-full h-11 rounded-xl px-3 ring-1 ring-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-400">
+                <option value="0" {% if request.form.get('Embarked','0')=='0' %}selected{% endif %}>Southampton (S = 0)</option>
+                <option value="1" {% if request.form.get('Embarked')=='1' %}selected{% endif %}>Cherbourg (C = 1)</option>
+                <option value="2" {% if request.form.get('Embarked')=='2' %}selected{% endif %}>Queenstown (Q = 2)</option>
+              </select>
+              <span class="mt-1 block text-xs text-slate-500">Mapped as {'S':0,'C':1,'Q':2}.</span>
+            </label>
+
+            <!-- Raw fields to derive FamilySize/HasCabin/Isalone -->
+            <label class="block" for="sibsp">
+              <span class="block text-sm font-medium mb-1">Siblings/Spouses aboard (SibSp)</span>
+              <input id="sibsp" name="SibSp" type="number" min="0" max="8" step="1" value="{{ request.form.get('SibSp', 0) }}"
+                     class="w-full h-11 rounded-xl px-3 ring-1 ring-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-400" />
+            </label>
+
+            <label class="block" for="parch">
+              <span class="block text-sm font-medium mb-1">Parents/Children aboard (Parch)</span>
+              <input id="parch" name="Parch" type="number" min="0" max="6" step="1" value="{{ request.form.get('Parch', 0) }}"
+                     class="w-full h-11 rounded-xl px-3 ring-1 ring-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-sky-400" />
+            </label>
+
+            <label class="block md:col-span-2" for="cabin">
+              <span class="block text-sm font-medium mb-1">Cabin</span>
+              <input id="cabin" name="Cabin" type="text" placeholder="e.g., C85" value="{{ request.form.get('Cabin','') }}"
+                     class="w-full h-11 rounded-xl px-3 ring-1 ring-slate-300 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+              <span class="mt-1 block text-xs text-slate-500">Server sets HasCabin = notnull(Cabin) → 1/0.</span>
+            </label>
+          </div>
+
+          <div class="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <button type="submit" class="inline-flex justify-center items-center gap-2 rounded-2xl px-5 py-3 font-semibold text-white bg-gradient-to-r from-sky-500 to-emerald-500 shadow hover:brightness-105 active:scale-[.99]">
+              Predict
+            </button>
+            <a href="/" class="inline-flex justify-center items-center gap-2 rounded-2xl px-5 py-3 font-semibold ring-1 ring-slate-300 bg-white hover:bg-slate-50">Reset</a>
+            <span class="text-xs text-slate-500">Server computes: FamilySize=SibSp+Parch+1; HasCabin=notnull(Cabin); Isalone=FamilySize==1; Title from Name; Pclass_Fare, Age_Fare.</span>
+          </div>
+        </form>
+      </section>
+
+      <aside class="lg:col-span-1">
+        <div class="rounded-3xl bg-white/80 shadow-2xl ring-1 ring-slate-200/80 backdrop-blur p-6 md:p-8 sticky top-6">
+          <h3 class="text-lg font-semibold mb-4">Prediction</h3>
+          {% if prediction is none %}
+            <p class="text-sm text-slate-600">Submit the form to see the result.</p>
+          {% else %}
+            <div class="space-y-4">
+              <div>
+                <div class="flex items-center justify-between mb-1 text-sm">
+                  <span>Survival probability</span>
+                  <span class="tabular-nums">{{ (prediction_prob * 100) | round(0) }}%</span>
+                </div>
+                <div class="w-full h-3 rounded-full bg-slate-200 overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-sky-400 to-emerald-400" style="width: {{ (prediction_prob * 100) | round(0) }}%"></div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 text-sm">
+                {% for k in ['Name','Age','Pclass','Fare','Sex','Embarked','SibSp','Parch','Cabin'] %}
+                {% if features[k] is not none %}
+                <div class="p-3 rounded-2xl ring-1 ring-slate-200 bg-white">
+                  <div class="text-slate-500">{{ k }}</div>
+                  <div class="font-semibold break-words">{{ features[k] }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+              </div>
+
+              {% if features_computed %}
+              <div class="mt-4">
+                <div class="text-xs font-semibold text-slate-600 mb-2">Computed (server)</div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  {% for k in ['FamilySize','HasCabin','Isalone','Title','Pclass_Fare','Age_Fare'] %}
+                  {% if features_computed[k] is not none %}
+                  <div class="p-3 rounded-2xl ring-1 ring-slate-200 bg-white">
+                    <div class="text-slate-500">{{ k }}</div>
+                    <div class="font-semibold">{{ features_computed[k] }}</div>
+                  </div>
+                  {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+
+            </div>
+          {% endif %}
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div aria-hidden="true" class="pointer-events-none fixed inset-x-0 bottom-0 h-40 overflow-hidden">
+    <svg class="absolute bottom-0 w-[200%] h-40 animate-swell opacity-80" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path fill="url(#wave1)" d="M0,160L40,170.7C80,181,160,203,240,197.3C320,192,400,160,480,165.3C560,171,640,213,720,224C800,235,880,213,960,197.3C1040,181,1120,171,1200,176C1280,181,1360,203,1400,213.3L1440,224L1440,320L0,320Z"></path>
+      <defs>
+        <linearGradient id="wave1" x1="0" x2="1">
+          <stop offset="0%" stop-color="#38bdf8"/>
+          <stop offset="100%" stop-color="#0ea5e9"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <svg class="absolute bottom-0 w-[200%] h-36 animate-swell-rev opacity-70" viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path fill="url(#wave2)" d="M0,192L60,192C120,192,240,192,360,170.7C480,149,600,107,720,117.3C840,128,960,192,1080,181.3C1200,171,1320,85,1380,42.7L1440,0L1440,320L0,320Z"></path>
+      <defs>
+        <linearGradient id="wave2" x1="0" x2="1">
+          <stop offset="0%" stop-color="#7dd3fc"/>
+          <stop offset="100%" stop-color="#3b82f6"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div class="absolute left-1/2 -translate-x-1/2 bottom-6 animate-bob">
+      <img src="..\static\img\ship.png" alt="Titanic ship icon" class="h-36 w-36 drop-shadow-lg opacity-90" />
+    </div>
+  </div>
+
+  <footer id="about" class="relative z-10 px-4 md:px-6 py-6 text-center text-xs text-slate-500">
+    <p>
+      Titanic Classifier &mdash; An interactive web form built with Flask and Tailwind CSS to predict survival on the Titanic using a machine learning model.
+    <p class="mt-2 text-[10px] text-slate-400">
+    </p>
+  </footer>
+</body>
+</html>
